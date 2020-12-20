@@ -1,0 +1,23 @@
+<!DOCTYPE suite SYSTEM "https://testng.org/testng-1.0.dtd" >
+
+<!--<suite name="TestAll" verbose="1">-->
+<suite name="Test suite" verbose="1" parallel="classes" thread-count="2">
+
+    <listeners>
+        <listener class-name="core.utils.Listener"/>
+    </listeners>
+
+    <test name="test 1">
+        <classes>
+            <class name="tests.GoogleScreenClass" />
+        </classes>
+    </test>
+
+    <test name="test 2">
+        <classes>
+            <class name="tests.SignInGoogleAccountsScreenClass" />
+            <class name="tests.GooglePodcastsScreenClass" />
+        </classes>
+    </test>
+
+</suite>

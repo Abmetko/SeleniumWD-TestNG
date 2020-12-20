@@ -1,0 +1,66 @@
+mvn clean test -Dtestng.dtd.http=true
+
+    <build>
+        <plugins>
+            <!-- https://mvnrepository.com/artifact/org.apache.maven.plugins/maven-surefire-plugin -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <version>3.0.0-M5</version>
+                <configuration>
+                    <suiteXmlFiles>
+                        <suiteXmlFile>src/test/resources/testng.xml</suiteXmlFile>
+                    </suiteXmlFiles>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>3.8.1</version>
+                <configuration>
+                    <source>1.8</source>
+                    <target>1.8</target>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+
+    Самой главный нюанс, на котором не сделан акцент - неявный вейт ждет только до появления элемента в ДОМе.
+
+    Козырь явных вейтов состоит в том - что они могут ждать до любого состояния элемента (виден, невиден, энейблд, дисейблд), причем вы можете как угодно кастомизировать (если знаете как) это ожидание, то есть - указывать - чего именно ждать.
+
+    В наш мир динамических сингл пейдж приложений, от неявных вейтов - толку мало. Если вы будете следовать принципу - всегда имплисит вейты, то у вас время от времени тесты будут падать, потому что не будут учитывать то, что некоторые элементы появляются в ДОМе раньше чем они становятся "видимыми". Плюс когда тесты начнут падать (а вы ведь уже используете неявные ожидания) - вам прийдется встравивать явные - и тогда типа как не будете следовать официальной рекомендации - "не мешать их вместе".
+
+    Поэтому я предлагаю не запариваться, а всегда юзать явные ожидания ;). Но для того что бы не запариваться - нужно либо использовать selenide либо уметь построить свой собственний аналог selenide из чистого селениума ;)
+
+
+
+    анный вопрос больше относится к критериям ожидания (а не к типам ожидания) а критерии определяются методами:
+    - Говоря о ImplicitWait чаще всего имеется ввиду методы findElement и findElements, которые в свою очередь, ждут единственного - наличия элемента/ов в DOM.
+    - У ExplicitWait есть разные варианты использования, но как правило речь идёт о wait.until(), где есть масса настраиваемых ожидаемых критериев, описаных в классе ExpectedConditions: visibility, clickability, numberOfElements etc.
+
+    Будь у вас в наличии метод findVisibleElement, использующий ImlicitWait, он бы прекрасно возвращал только видимые элементы по неявному ожиданию (но его нет).
+
+    То есть, возвращаясь к вашему вопросу "что именно ждет Implicit Wait" - сам он ничего не ждет, а лишь определяет, как задано время ожидания. "Что именно" - определяет критерий.
+
+    Надо знать и понимать ограничения фреймворка на использование комбинаций "Критерий + Тип ожидания".
+    В текущей реализации селениума я предпочитаю использовать wait.until(ExpectedConditions) из-за широкого спектра именно критериев. Как он ждет (Явно/Неявно) - по большому счету меня не волнует: хотя я знаю что используется явное, методы выбраны не по этому признаку.
+
+    Difference Between Implicit, Explicit and Fluent Wait
+    Implicit Wait: During Implicit wait if the Web Driver cannot find it immediately because of its availability, it will keep polling (around 250 milli seconds) the DOM to get the element. If the element is not available within the specified Time an NoSuchElementException will be raised. The default setting is zero. Once we set a time, the Web Driver waits for the period of the WebDriver object instance.
+
+    Explicit Wait: There can be instance when a particular element takes more than a minute to load. In that case you definitely not like to set a huge time to Implicit wait, as if you do this your browser will going to wait for the same time for every element.
+
+    To avoid that situation you can simply put a separate time on the required element only. By following this your browser implicit wait time would be short for every element and it would be large for specific element.
+
+    Fluent Wait: Let’s say you have an element which sometime appears in just 1 second and some time it takes minutes to appear. In that case it is better to use fluent wait, as this will try to find element again and again until it find it or until the final timer runs out.
+
+    Solutions: We always get confuse when it comes to using Wait commands, to better understand it we need to remember that there is a difference between several scenarios:
+
+    An element not being present at all in the DOM.
+
+    An element being present in the DOM but not visible.
+
+    An element being present in the DOM but not enabled. (i.e. clickable)
+
+    There are pages which get displayed with the JavaScript, the elements are already present in the browser DOM, but are not visible. The implicit wait only waits for an element to appear in the DOM, so it returns immediately, but when you try to interact with the element you get a NoSuchElementException. You could test this hypothesis by writing a helper method that explicit wait for an element to be visible or clickable.
